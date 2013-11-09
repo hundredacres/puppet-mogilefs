@@ -32,7 +32,7 @@ class mogilefs::mogilefsd ($dbtype = 'SQLite', $dbname = 'mogilefs')
   service { 'mogilefsd':
     ensure  => $mogilefs::manage_service_ensure,
     enable  => $mogilefs::manage_service_enable,
-    require => File['mogilefsd.init'],
+    require => [File['mogilefsd.init'], Exec['mogdbsetup']],
     noop    => $mogilefs::noops,
   }
 
@@ -49,14 +49,14 @@ class mogilefs::mogilefsd ($dbtype = 'SQLite', $dbname = 'mogilefs')
     noop     => $mogilefs::noops,
     provider => 'cpanm',
     require  => Package['cpanminus'],
-    before   => Exec[mogdbsetup]
+    before   => Exec['mogdbsetup']
   }
 
   exec { 'mogdbsetup':
     command     => "mogdbsetup --type=$mogilefs::mogilefsd::dbtype --yes --dbname=$mogilefs::mogilefsd::dbname --verbose",
-    path        => ['/usr/bin', '/usr/sbin', '/usr/local/bin'],
+    path        => ['/usr/bin', '/usr/sbin', '/usr/local/bin', '/bin'],
     subscribe   => Package['MogileFS::Server'],
-    refreshonly => true,
+    unless      => "ls $mogilefs::mogilefsd::dbname",
     audit       => $mogilefs::manage_audit,
     noop        => $mogilefs::noops,
     user        => $mogilefs::username,

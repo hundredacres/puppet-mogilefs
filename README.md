@@ -6,6 +6,11 @@ Released under the terms of Apache 2 License.
 
 Tested with Ubuntu 12.04 LTS
 
+## Quickstart
+
+	git clone https://github.com/Yuav/puppet-mogilefs.git mogilefs
+	sudo puppet apply --modulepath=`pwd` -e "class { include mogilefs::dev }"
+
 ## USAGE - Basic management
 
 * Install mogilefs with default settings
