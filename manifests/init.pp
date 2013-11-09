@@ -8,66 +8,45 @@
 # [*options*]
 #   An hash of custom options to be used in templates for arbitrary settings.
 #
-# [*version*]
-#   The package version, used in the ensure parameter of package type.
-#   Default: present. Can be 'latest' or a specific version number.
-#   Note that if the argument absent (see below) is set to true, the
-#   package is removed, whatever the value of version parameter.
-#
-# [*absent*]
-#   Set to 'true' to remove all the resources installed by the module
-#   Default: false
-#
-# [*disable*]
-#   Set to 'true' to disable service(s) managed by module. Default: false
-#
-# [*disableboot*]
-#   Set to 'true' to disable service(s) at boot, without checks if it's running
-#   Use this when the service is managed by a tool like a cluster software
-#   Default: false
-#
-# [*audit_only*]
-#   Set to 'true' if you don't intend to override existing configuration files
-#   and want to audit the difference between existing files and the ones
-#   managed by Puppet. Default: false
-#
-# [*noops*]
-#   Set noop metaparameter to true for all the resources managed by the module.
-#   Basically you can run a dryrun for this specific module if you set
-#   this to true. Default: false
-#
 class mogilefs (
-  $options                = {
+  $options           = {
   }
   ,
-  $trackers               = "$::fqdn:7001,$::hostname:7001",
-  $mogilefsd_service      = true,
-  $mogstored_service      = true,
-  $config_dir             = '/etc/mogilefs',
-  $dbtype                 = 'SQLite',
-  $dbname                 = 'mogilefs',
-  $datapath               = '/var/mogdata',
-  $version                = 'present',
-  $mogstored_init_content = undef,
-  $absent                 = false,
-  $disable                = false,
-  $audit_only             = false,
-  $noops                  = false) {
-  # Core parameters
-  $package = 'MogileFS::Server'
-  $username = 'mogilefs'
-  $config_file_mode = '0644'
-  $config_file_owner = $mogilefs::username
-  $config_file_group = $mogilefs::username
-
-  $manage_mogstored_init_content = $mogstored_init_content ? {
-    undef   => template('mogilefs/mogstored.init.Debian.erb'),
-    default => template('mogilefs/mogstored.init.Debian.erb')
+  $trackers          = '',
+  $add_to_tracker    = true,
+  $mogilefsd_service = true,
+  $mogilefsd_config  = '',
+  $mogstored_service = true,
+  $mogstored_config  = '',
+  $config_dir        = '/etc/mogilefs',
+  $config_file_mode  = '0644',
+  $config_file_owner = 'mogilefs',
+  $config_file_group = 'mogilefs',
+  $package           = 'MogileFS::Server',
+  $dbtype            = 'SQLite',
+  $dbname            = 'mogilefs',
+  $dbuser            = '',
+  $dbpass            = '',
+  $datapath          = '/var/mogdata',
+  $version           = 'present',
+  $absent            = false,
+  $disable           = false,
+  $audit_only        = false,
+  $noops             = false) {
+  $real_trackers = $trackers ? {
+    ''      => "${::fqdn}:7001,${::hostname}:7001",
+    default => $trackers
   }
+
+  # Core parameters
+  $username = 'mogilefs'
 
   if !inline_template('<%= options.class == Hash %>') {
     fail('Option parameter must be hash, or empty')
   }
+
+  $manage_mogstored_init_content = template('mogilefs/mogstored.init.Debian.erb'
+  )
 
   # Variables that apply parameters behaviours
   $manage_package = $mogilefs::absent ? {
@@ -166,7 +145,7 @@ class mogilefs (
     $real_dbname = $mogilefs::dbtype ? {
       'SQLite' => $dbname ? {
         /^\//   => $dbname,
-        default => "/tmp/$dbname.sqlite3"
+        default => "/tmp/${dbname}.sqlite3"
       },
       default  => $dbname
     }

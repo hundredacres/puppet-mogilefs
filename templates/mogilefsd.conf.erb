@@ -1,5 +1,7 @@
 #daemonize = 1
-db_dsn = DBI:<%= scope.lookupvar('mogilefs::mogilefsd::dbtype')%>:<%= scope.lookupvar('mogilefs::mogilefsd::dbname')%><%= options.has_key?('dsn') ? ':' + options['dsn'] : '' %>
+db_dsn = DBI:<%=
+ scope.lookupvar('mogilefs::mogilefsd::dbtype') == 'Mysql' ? 'mysql' : scope.lookupvar('mogilefs::mogilefsd::dbtype')
+ %>:<%= scope.lookupvar('mogilefs::mogilefsd::dbname')%><%= options.has_key?('dsn') ? ':' + options['dsn'] : '' %>
 #db_dsn = DBI:mysql:mogilefs:host=localhost;port=3306;mysql_connect_timeout=5
 db_user = <%= options['db_user'] %>
 db_pass = <%= options['db_pass'] %>
