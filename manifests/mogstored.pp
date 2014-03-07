@@ -56,6 +56,17 @@ class mogilefs::mogstored inherits mogilefs {
     noop   => $mogilefs::noops,
   }
 
+  # cmogstored binary - http://bogomips.org/cmogstored/README
+  case $::osfamily {
+    'redhat': {
+      package { 'cmogstored':
+        ensure => 'present',
+        noop   => $mogilefs::noops,
+      }
+    }
+    default: { fail('Unsupported OS version') }
+  }
+
   # Add mogstored host to tracker
   if $mogilefs::add_to_tracker == true {
     exec { 'mogilefs_addhost':

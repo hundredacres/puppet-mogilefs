@@ -1,0 +1,73 @@
+#!/bin/bash
+#
+# This file is managed by puppet
+#
+# Manual changes to this file will get overwritten
+#
+#
+# Init file for the mogilefs daemon
+#
+# chkconfig: 2345 98 20
+# description:  mogilefsd is the tracker daemon for mogilefs.
+#
+# processname: mogilefsd
+# pidfile: /var/run/mogilefsd
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+RETVAL=0
+prog="mogilefsd"
+desc="MogileFS tracker daemon"
+
+if [ -r /etc/sysconfig/$prog ]; then
+        source /etc/sysconfig/$prog
+fi
+
+start() {
+        echo -n $"Starting $desc ($prog): "
+        su scmogile -c "ulimit -n 102400; mogilefsd -c /etc/mogilefs/mogilefsd.conf --daemon"
+        RETVAL=$?
+        [ $RETVAL -eq 0 ] && touch /var/lock/subsys/$prog
+        echo_success
+        echo
+        return $RETVAL
+}
+
+stop() {
+        echo -n $"Stopping $desc ($prog): "
+        killproc $prog
+        RETVAL=$?
+        echo
+        [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/$prog
+        return $RETVAL
+}
+
+restart() {
+        stop
+        start
+}
+
+case "$1" in
+  start)
+        start
+        ;;
+  stop)
+        stop
+        ;;
+  restart)
+        restart        ;;
+  condrestart)
+        [ -e /var/lock/subsys/$prog ] && restart
+        RETVAL=$?
+        ;;
+  status)
+        status $prog
+        RETVAL=$?
+        ;;
+  *)
+        echo $"Usage: $0 {start|stop|restart|condrestart|status}"
+        RETVAL=1
+esac
+
+exit $RETVAL

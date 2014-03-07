@@ -22,7 +22,6 @@ class mogilefs (
   $config_file_mode  = '0644',
   $config_file_owner = 'mogilefs',
   $config_file_group = 'mogilefs',
-  $package           = 'MogileFS::Server',
   $dbtype            = 'SQLite',
   $dbname            = 'mogilefs',
   $dbuser            = '',
@@ -32,21 +31,18 @@ class mogilefs (
   $absent            = false,
   $disable           = false,
   $audit_only        = false,
-  $noops             = false) {
+  $noops             = false,
+  $username = 'mogilefs') {
   $real_trackers = $trackers ? {
     ''      => "${::fqdn}:7001,${::hostname}:7001",
     default => $trackers
   }
 
-  # Core parameters
-  $username = 'mogilefs'
-
   if !inline_template('<%= options.class == Hash %>') {
     fail('Option parameter must be hash, or empty')
   }
 
-  $manage_mogstored_init_content = template('mogilefs/mogstored.init.Debian.erb'
-  )
+  $manage_mogstored_init_content = template("mogilefs/mogstored.init.${::osfamily}.erb")
 
   # Variables that apply parameters behaviours
   $manage_package = $mogilefs::absent ? {
@@ -97,7 +93,7 @@ class mogilefs (
   user { $mogilefs::username:
     ensure     => 'present',
     comment    => 'MogileFS user',
-    shell      => '/bin/false',
+    shell      => '/bin/bash',
     home       => $mogilefs::datapath,
     managehome => false,
   }
@@ -112,27 +108,52 @@ class mogilefs (
   }
 
   # Package
-  if !defined(Package['cpanminus']) {
-    package { 'cpanminus': ensure => installed }
+  $cpan_package = $::operatingsystem ? {
+    /(?i:Debian|Ubuntu|Mint)/       => 'cpanminus',
+    /(?i:RedHat|Centos|Scientific)/ => 'perl-App-cpanminus',
+    default                         => '',
   }
 
-  if !defined(Package['perl-doc']) {
-    package { 'perl-doc': ensure => installed }
+  $package = $::operatingsystem ? {
+    /(?i:Debian|Ubuntu|Mint)/       => 'MogileFS::Server',
+    /(?i:RedHat|Centos|Scientific)/ => 'perl-MogileFS-Server',
+    default                         => '',
   }
 
-  package { $mogilefs::package:
-    ensure   => $mogilefs::manage_package,
-    noop     => $mogilefs::noops,
-    provider => 'cpanm',
-    require  => Package['cpanminus'],
+  if !defined(Package[$cpan_package]) {
+    package { $cpan_package : ensure => installed }
   }
 
-  # Client
-  package { 'MogileFS::Utils':
-    ensure   => $mogilefs::manage_package_dependencies,
-    noop     => $mogilefs::noops,
-    provider => 'cpanm',
-    require  => Package['cpanminus'],
+  case $::osfamily {
+    'debian': {
+      if !defined(Package['perl-doc']) {
+        package { 'perl-doc' : ensure => installed }
+      }
+      package { $mogilefs::package:
+        ensure   => $mogilefs::manage_package,
+        noop     => $mogilefs::noops,
+        provider => 'cpanm',
+        require  => Package[$cpan_package],
+      }
+      # Client
+      package { 'MogileFS::Utils':
+        ensure   => $mogilefs::manage_package_dependencies,
+        noop     => $mogilefs::noops,
+        provider => 'cpanm',
+        require  => Package[$cpan_package],
+      }
+    }
+    'redhat': {
+      package { 'perl-MogileFS-Utils':
+        ensure   => 'present',
+      }
+      package { $mogilefs::package:
+        ensure  => $mogilefs::manage_package,
+        noop    => $mogilefs::noops,
+        require => Package[$cpan_package],
+      }
+    }
+    default: {}
   }
 
   # Mogstored
