@@ -72,9 +72,10 @@ class mogilefs::mogstored inherits mogilefs {
     exec { 'mogilefs_addhost':
       path    => ['/bin', '/usr/local/bin', '/usr/bin'],
       command => "mogadm --trackers=${mogilefs::real_trackers} \
-      host add ${::hostname} --ip=${::fqdn} --status=alive",
+      host add ${::hostname} --ip=${::ipaddress_lo} --status=alive",
       unless  => "mogadm --trackers=${mogilefs::real_trackers} \
       host list | grep \s${::hostname}",
+      require => Service['mysqld', 'mogilefsd'],
     }
 
     exec { 'mogilefs_enablehost':
@@ -83,6 +84,7 @@ class mogilefs::mogstored inherits mogilefs {
       host mark ${::hostname} alive",
       unless  => "mogadm --trackers=${mogilefs::real_trackers} \
       host list | grep ^${::hostname}.*alive",
+      require => [Exec['mogilefs_addhost'],Service['mysqld', 'mogilefsd']],
     }
   }
 }

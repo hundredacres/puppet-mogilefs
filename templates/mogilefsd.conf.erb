@@ -1,11 +1,11 @@
 #daemonize = 1
 db_dsn = DBI:<%=
  scope.lookupvar('mogilefs::mogilefsd::dbtype') == 'MySQL' ? 'mysql' : scope.lookupvar('mogilefs::mogilefsd::dbtype')
- %>:<%= scope.lookupvar('mogilefs::mogilefsd::dbname')%><%= options.has_key?('dsn') ? ':' + options['dsn'] : '' %>
+ %>:<%= scope.lookupvar('mogilefs::mogilefsd::dbname')%><%= @options.has_key?('dsn') ? ':' + options['dsn'] : '' %>
 #db_dsn = DBI:mysql:mogilefs:host=localhost;port=3306;mysql_connect_timeout=5
 db_user = <%= scope.lookupvar('mogilefs::dbuser') %>
 db_pass = <%= scope.lookupvar('mogilefs::dbpass') %>
-listen = <%= options.has_key?('listen') ? options['listen'] : '127.0.0.1:7001' %>
+listen = <%= @options.has_key?('listen') ? options['listen'] : '127.0.0.1:7001' %>
 node_timeout = 5
 conf_port = 7001
 listener_jobs = 10

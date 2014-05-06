@@ -36,10 +36,11 @@ mogilefs {
   }
 
   service { 'mogilefsd':
-    ensure  => $mogilefs::manage_service_ensure,
-    enable  => $mogilefs::manage_service_enable,
-    require => File['mogilefsd.init'],
-    noop    => $mogilefs::noops,
+    ensure    => $mogilefs::manage_service_ensure,
+    enable    => $mogilefs::manage_service_enable,
+    require   => [Exec['mogdbsetup'],File['mogilefsd.init']],
+    noop      => $mogilefs::noops,
+    #subscribe => Exec['mogdbsetup'],
   }
 
   # Set up database
@@ -92,5 +93,6 @@ mogilefs {
     audit       => $mogilefs::manage_audit,
     noop        => $mogilefs::noops,
     user        => $mogilefs::username,
+    require     => Service['mysqld'],
   }
 }
