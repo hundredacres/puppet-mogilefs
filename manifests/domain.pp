@@ -1,3 +1,16 @@
+# Define:: mogilefs::domain
+#
+# Configures mogilefs domain
+#
+# === Parameters
+#
+# [*domain*]
+#   Domain name for this MogileFS installation
+#
+# [*class*]
+#   MogileFS class
+#   TODO: Update to allow array of classes to be passed
+#
 define mogilefs::domain (
   $trackers = mogilefs::real_trackers,
   $domain = '',

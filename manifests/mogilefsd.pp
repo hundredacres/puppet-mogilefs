@@ -38,9 +38,8 @@ mogilefs {
   service { 'mogilefsd':
     ensure    => $mogilefs::manage_service_ensure,
     enable    => $mogilefs::manage_service_enable,
-    require   => [Exec['mogdbsetup'],File['mogilefsd.init']],
+    require   => [File['mogilefsd.init'],Mysql::Grant['mogilefs'],Exec['mogdbsetup']],
     noop      => $mogilefs::noops,
-    #subscribe => Exec['mogdbsetup'],
   }
 
   # Set up database
@@ -70,7 +69,7 @@ mogilefs {
         ensure   => $mogilefs::manage_package,
         noop     => $mogilefs::noops,
         provider => 'cpanm',
-        require  => Package[$cpan_package],
+        require  => Package[$mogilefs::cpan_package],
         before   => Exec[mogdbsetup]
       }
     }
@@ -78,7 +77,7 @@ mogilefs {
       package { $databasepackage:
         ensure   => $mogilefs::manage_package,
         noop     => $mogilefs::noops,
-        require  => Package[$cpan_package],
+        require  => Package[$mogilefs::cpan_package],
         before   => Exec[mogdbsetup]
       }
     }
@@ -93,6 +92,6 @@ mogilefs {
     audit       => $mogilefs::manage_audit,
     noop        => $mogilefs::noops,
     user        => $mogilefs::username,
-    require     => Service['mysqld'],
+    require     => [Mysql::Grant['mogilefs'],Service['mysqld']],
   }
 }
